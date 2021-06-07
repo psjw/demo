@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ControllerAdvice
-public class TaskErrorAdvice {
+public class NotFoundErrorAdvice {
 
     @ResponseBody // 써 놓은 것 그대로 나감
     @ResponseStatus(HttpStatus.NOT_FOUND)
