@@ -13,7 +13,14 @@ public class NotFoundErrorAdvice {
     @ResponseBody // 써 놓은 것 그대로 나감
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler(TaskNotFoundException.class)
-    public ErrorResponse handleNotFound(){
+    public ErrorResponse handleTaskNotFound(){
         return new ErrorResponse("Task not found");
+    }
+
+    @ResponseBody // 써 놓은 것 그대로 나감
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler(ProductNotFoundException.class)
+    public ErrorResponse handleProductNotFound(){
+        return new ErrorResponse("Product not found");
     }
 }
