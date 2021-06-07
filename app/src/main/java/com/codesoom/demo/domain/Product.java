@@ -15,8 +15,14 @@ package com.codesoom.demo.domain;
 // 3. 가격 - 5,000 원 (판매가)
 // 4. 이미지 - static, CDN =>  image URL
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 
+@Entity
 public class Product {
+    @Id
+    @GeneratedValue
     private Long id; // final  붙이면 문제 -> 내부적으로 JPA 사용시 리플렉션을 통해  setter getter 메서드 생성하여 삽입하기때문에 안됨
     private String name;
     private String maker;
@@ -47,7 +53,7 @@ public class Product {
         this.price = price;
     }
 
-    public Product(Long id,String name, String maker, Integer price) {
+    public Product(Long id, String name, String maker, Integer price) {
         this.id = id;
         this.name = name;
         this.maker = maker;
@@ -72,5 +78,12 @@ public class Product {
 
     public String getImageUrl() {
         return imageUrl;
+    }
+
+    public void change(Product source) {
+        //TODO :...
+        this.name = source.getName();
+        this.maker = source.getMaker();
+        this.price = source.getPrice();
     }
 }
