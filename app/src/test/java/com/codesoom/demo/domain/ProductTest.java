@@ -8,9 +8,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ProductTest {
     @Test
-    void creationWithoutId() {
-        Product product = new Product("쥐돌이", "냥이월드", 5000);
-
+    void creationWithBuilder() {
+//        Product product = new Product("쥐돌이", "냥이월드", 5000);
+        Product product = Product.builder()
+                .name("쥐돌이")
+                .maker("냥이월드")
+                .price(5000)
+                .build();
         assertThat(product.getName()).isEqualTo("쥐돌이");
         assertThat(product.getMaker()).isEqualTo("냥이월드");
         assertThat(product.getPrice()).isEqualTo(5000);
@@ -19,16 +23,25 @@ class ProductTest {
 
     @Test
     void creationWithId() {
-        Product product = new Product(1L, "쥐돌이", "냥이월드", 5000);
+        Product product = Product.builder()
+                .id(1L)
+                .name("쥐돌이")
+                .maker("냥이월드")
+                .price(5000)
+                .build();
         assertThat(product.getId()).isEqualTo(1L);
         assertThat(product.getName()).isEqualTo("쥐돌이");
     }
 
     @Test
     void change() {
-        Product product = new Product(1L, "쥐돌이", "냥이월드", 5000);
-        Product source = new Product("쥐순이", "코드숨", 10000);
-        product.change(source);
+         Product product = Product.builder()
+                .id(1L)
+                .name("쥐돌이")
+                .maker("냥이월드")
+                .price(5000)
+                .build();
+        product.change("쥐순이","코드숨",10000);
         assertThat(product.getName()).isEqualTo("쥐순이");
         assertThat(product.getMaker()).isEqualTo("코드숨");
         assertThat(product.getPrice()).isEqualTo(10000);

@@ -2,6 +2,7 @@ package com.codesoom.demo.controllers;
 
 import com.codesoom.demo.application.ProductService;
 import com.codesoom.demo.domain.Product;
+import com.codesoom.demo.dto.ProductData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,18 +39,28 @@ class ProductControllerTest {
 
     @BeforeEach
     void setUp() {
-        Product product = new Product("쥐돌이", "냥이월드", 5000);
+        Product product = Product.builder()
+                .id(1L)
+                .name("쥐돌이")
+                .maker("냥이월드")
+                .price(5000)
+                .build();
 
         given(productService.getProducts()).willReturn(List.of(product));
         given(productService.getProduct(1L)).willReturn(product);
         given(productService.getProduct(1000L)).willThrow(new ProductNotFoundException(1000L));
-        given(productService.createProduct(any(Product.class))).willReturn(product);
-        given(productService.updateProduct(eq(1L), any(Product.class))).will(invocation -> {
-            Product source = invocation.getArgument(1);
+        given(productService.createProduct(any(ProductData.class))).willReturn(product);
+        given(productService.updateProduct(eq(1L), any(ProductData.class))).will(invocation -> {
+            ProductData source = invocation.getArgument(1);
             Long id = invocation.getArgument(0);
-            return new Product(id, source.getName(), source.getMaker(), source.getPrice());
+            return Product.builder()
+                    .id(id)
+                    .name(source.getName())
+                    .maker(source.getMaker())
+                    .price(source.getPrice())
+                    .build();
         });
-        given(productService.updateProduct(eq(1000L),any(Product.class)))
+        given(productService.updateProduct(eq(1000L),any(ProductData.class)))
                 .willThrow(new ProductNotFoundException(1000L));
         given(productService.deleteProduct(eq(1000L)))
                 .willThrow(new ProductNotFoundException(1000L));
@@ -81,14 +92,23 @@ class ProductControllerTest {
     }
 
     @Test
-    void create() throws Exception {
+    void createWithValidAttributes() throws Exception {
         mockMvc.perform(post("/products")
                 .accept(MediaType.APPLICATION_JSON_UTF8)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"name\":\"쥐돌이\",\"maker\":\"냥이월드\",\"price\":5000}")) //WebMVC는 UTF-8을 기본으로 안잡음
                 .andExpect(status().isCreated())
                 .andExpect(content().string(containsString("쥐돌이")));
-        verify(productService).createProduct(any(Product.class));
+        verify(productService).createProduct(any(ProductData.class));
+    }
+
+    @Test
+    void createWithInvalidAttributes() throws Exception {
+        mockMvc.perform(post("/products")
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"\",\"maker\":\"\",\"price\":0}")) //WebMVC는 UTF-8을 기본으로 안잡음
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -99,7 +119,7 @@ class ProductControllerTest {
                 .content("{\"name\":\"쥐순이\",\"maker\":\"냥이월드\",\"price\":5000}")) //WebMVC는 UTF-8을 기본으로 안잡음
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("쥐순이")));
-        verify(productService).updateProduct(eq(1L), any(Product.class));
+        verify(productService).updateProduct(eq(1L), any(ProductData.class));
     }
 
     @Test
@@ -109,6 +129,15 @@ class ProductControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"name\":\"쥐순이\",\"maker\":\"냥이월드\",\"price\":5000}")) //WebMVC는 UTF-8을 기본으로 안잡음
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateWithNotInvalidAttributes() throws Exception {
+        mockMvc.perform(patch("/products/1")
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"\",\"maker\":\"\",\"price\":5000}")) //WebMVC는 UTF-8을 기본으로 안잡음
+                .andExpect(status().isBadRequest());
     }
 
 

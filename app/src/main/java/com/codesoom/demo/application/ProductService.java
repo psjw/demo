@@ -8,6 +8,7 @@ package com.codesoom.demo.application;
 import com.codesoom.demo.controllers.ProductNotFoundException;
 import com.codesoom.demo.domain.Product;
 import com.codesoom.demo.domain.ProductRepository;
+import com.codesoom.demo.dto.ProductData;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,15 +34,20 @@ public class ProductService {
         return findProduct(id);
     }
 
-    public Product createProduct(Product product) {
+    public Product createProduct(ProductData productData) {
+        Product product = Product.builder()
+                .name(productData.getName())
+                .maker(productData.getMaker())
+                .price(productData.getPrice())
+                .build();
         return productRepository.save(product);
     }
 
-    public Product updateProduct(Long id, Product source) {
+    public Product updateProduct(Long id, ProductData productData) {
         //product 얻기
         Product product = findProduct(id);
         //정보바꾸기
-        product.change(source);
+        product.change(productData.getName(), productData.getMaker(), productData.getPrice());
         return product;
     }
 

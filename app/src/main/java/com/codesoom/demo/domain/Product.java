@@ -15,37 +15,33 @@ package com.codesoom.demo.domain;
 // 3. 가격 - 5,000 원 (판매가)
 // 4. 이미지 - static, CDN =>  image URL
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 @Entity
+@Getter
+@NoArgsConstructor
+@Builder
+@AllArgsConstructor
 public class Product {
     @Id
     @GeneratedValue
     private Long id; // final  붙이면 문제 -> 내부적으로 JPA 사용시 리플렉션을 통해  setter getter 메서드 생성하여 삽입하기때문에 안됨
+    @NotBlank
     private String name;
+    @NotBlank
     private String maker;
+    @NotNull
     private Integer price;
     private String imageUrl;
-
-    public Product(Long id, String name, String maker, Integer price, String imageUrl) {
-        this.id = id;
-        this.name = name;
-        this.maker = maker;
-        this.price = price;
-        this.imageUrl = imageUrl;
-    }
-
-    public Product(String name, String maker, Integer price, String imageUrl) {
-        this.name = name;
-        this.maker = maker;
-        this.price = price;
-        this.imageUrl = imageUrl;
-    }
-
-    public Product() {
-    }
 
     public Product(String name, String maker, Integer price) {
         this.name = name;
@@ -53,37 +49,10 @@ public class Product {
         this.price = price;
     }
 
-    public Product(Long id, String name, String maker, Integer price) {
-        this.id = id;
+    public void change(String name, String maker, Integer price) {
+        //TODO :...
         this.name = name;
         this.maker = maker;
         this.price = price;
-    }
-
-    public String getName() {
-        return this.name;
-    }
-
-    public Long getId() {
-        return this.id;
-    }
-
-    public String getMaker() {
-        return maker;
-    }
-
-    public Integer getPrice() {
-        return price;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void change(Product source) {
-        //TODO :...
-        this.name = source.getName();
-        this.maker = source.getMaker();
-        this.price = source.getPrice();
     }
 }
