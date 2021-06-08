@@ -9,5 +9,5 @@ public interface UserRepository {
 
     Optional<User> findById(Long id);
 
-    Optional<User> findByIdDeletedIsFalse(Long id);
+    Optional<User> findByIdAndDeletedIsFalse(Long id);
 }

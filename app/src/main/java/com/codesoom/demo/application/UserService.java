@@ -48,7 +48,7 @@ public class UserService {
     }
 
     private User findUser(Long id) {
-        return  userRepository.findByIdDeletedIsFalse(id)
+        return  userRepository.findByIdAndDeletedIsFalse(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
     }
 }

@@ -43,7 +43,7 @@ class UserServiceTest {
         given(userRepository.existsByEmail(EXISTED_EMAIL_ADDRESS))
                 .willThrow(new UserEmailDuplicationExeption("tester@example.com"));
 
-        given(userRepository.findByIdDeletedIsFalse(1L))
+        given(userRepository.findByIdAndDeletedIsFalse(1L))
                 .willReturn(Optional.of(
                         User.builder()
                                 .id(1L)
@@ -55,9 +55,9 @@ class UserServiceTest {
 //        given(userRepository.findById(1000L))
 //                .willThrow(new UserNotFoundException(1000L));
         //ToDO: 변경
-        given(userRepository.findByIdDeletedIsFalse(100L)).willReturn(Optional.empty());
+        given(userRepository.findByIdAndDeletedIsFalse(100L)).willReturn(Optional.empty());
 
-        given(userRepository.findByIdDeletedIsFalse(DELETE_USER_ID))
+        given(userRepository.findByIdAndDeletedIsFalse(DELETE_USER_ID))
                 .willReturn(Optional.empty());
     }
 
@@ -105,7 +105,7 @@ class UserServiceTest {
         assertThat(user.getId()).isEqualTo(1L);
         assertThat(user.getEmail()).isEqualTo(EXISTED_EMAIL_ADDRESS);
         assertThat(user.getName()).isEqualTo("TEST");
-        verify(userRepository).findByIdDeletedIsFalse(1L);
+        verify(userRepository).findByIdAndDeletedIsFalse(1L);
     }
 
     @Test
@@ -121,7 +121,7 @@ class UserServiceTest {
         })
                 .isInstanceOf(UserNotFoundException.class);
 
-        verify(userRepository).findByIdDeletedIsFalse(1000L);
+        verify(userRepository).findByIdAndDeletedIsFalse(1000L);
     }
 
 
@@ -135,7 +135,7 @@ class UserServiceTest {
         assertThatThrownBy(() -> {
             userService.updateUser(DELETE_USER_ID,modficationData);
         }).isInstanceOf(UserNotFoundException.class);
-        verify(userRepository).findByIdDeletedIsFalse(DELETE_USER_ID);
+        verify(userRepository).findByIdAndDeletedIsFalse(DELETE_USER_ID);
     }
 
     @Test
@@ -143,7 +143,7 @@ class UserServiceTest {
         User user = userService.deleteUser(1L);
         assertThat(user.getId()).isEqualTo(1L);
         assertThat(user.isDeleted()).isTrue();
-        verify(userRepository).findByIdDeletedIsFalse(1L);
+        verify(userRepository).findByIdAndDeletedIsFalse(1L);
     }
 
     @Test
@@ -152,7 +152,7 @@ class UserServiceTest {
         assertThatThrownBy(() -> {
             userService.deleteUser(100L);
         }).isInstanceOf(UserNotFoundException.class);
-        verify(userRepository).findByIdDeletedIsFalse(100L);
+        verify(userRepository).findByIdAndDeletedIsFalse(100L);
     }
 
     @Test
@@ -160,6 +160,6 @@ class UserServiceTest {
         assertThatThrownBy(() -> {
             userService.deleteUser(DELETE_USER_ID);
         }).isInstanceOf(UserNotFoundException.class);
-        verify(userRepository).findByIdDeletedIsFalse(DELETE_USER_ID);
+        verify(userRepository).findByIdAndDeletedIsFalse(DELETE_USER_ID);
     }
 }
