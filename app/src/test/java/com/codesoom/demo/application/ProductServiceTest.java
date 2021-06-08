@@ -5,10 +5,12 @@
 //5. deleteProduct -> 상품 삭제
 package com.codesoom.demo.application;
 
-import com.codesoom.demo.controllers.ProductNotFoundException;
+import com.codesoom.demo.errors.ProductNotFoundException;
 import com.codesoom.demo.domain.Product;
 import com.codesoom.demo.domain.ProductRepository;
 import com.codesoom.demo.dto.ProductData;
+import com.github.dozermapper.core.DozerBeanMapperBuilder;
+import com.github.dozermapper.core.Mapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -29,7 +31,8 @@ class ProductServiceTest {
 
     @BeforeEach
     void setUp() {
-        productService = new ProductService(productRepository);
+        Mapper mapper = DozerBeanMapperBuilder.buildDefault();
+        productService = new ProductService(mapper, productRepository);
 
         Product product = Product.builder()
                 .id(1L)
@@ -92,7 +95,7 @@ class ProductServiceTest {
 
     @Test
     void updateProductWithExistedId() {
-        ProductData productData =ProductData.builder()
+        ProductData productData = ProductData.builder()
                 .name("쥐순이")
                 .maker("냥이월드")
                 .price(5000)

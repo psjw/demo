@@ -3,6 +3,7 @@ package com.codesoom.demo.controllers;
 import com.codesoom.demo.application.ProductService;
 import com.codesoom.demo.domain.Product;
 import com.codesoom.demo.dto.ProductData;
+import com.codesoom.demo.errors.ProductNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

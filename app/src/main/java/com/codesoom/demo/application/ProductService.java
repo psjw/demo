@@ -5,23 +5,25 @@
 //5. deleteProduct -> 상품 삭제
 package com.codesoom.demo.application;
 
-import com.codesoom.demo.controllers.ProductNotFoundException;
+import com.codesoom.demo.errors.ProductNotFoundException;
 import com.codesoom.demo.domain.Product;
 import com.codesoom.demo.domain.ProductRepository;
 import com.codesoom.demo.dto.ProductData;
+import com.github.dozermapper.core.Mapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Transactional
 public class ProductService {
+    private final Mapper mapper;
 
-    private ProductRepository productRepository;
+    private final ProductRepository productRepository;
 
-    public ProductService(ProductRepository productRepository) {
+    public ProductService(Mapper mapper, ProductRepository productRepository) {
+        this.mapper = mapper;
         this.productRepository = productRepository;
     }
 
@@ -35,11 +37,8 @@ public class ProductService {
     }
 
     public Product createProduct(ProductData productData) {
-        Product product = Product.builder()
-                .name(productData.getName())
-                .maker(productData.getMaker())
-                .price(productData.getPrice())
-                .build();
+
+        Product product = mapper.map(productData, Product.class); //ORM setter지향하기 위해
         return productRepository.save(product);
     }
 
@@ -47,7 +46,7 @@ public class ProductService {
         //product 얻기
         Product product = findProduct(id);
         //정보바꾸기
-        product.change(productData.getName(), productData.getMaker(), productData.getPrice());
+        product.changeWith(mapper.map(productData, Product.class));
         return product;
     }
 

@@ -46,4 +46,22 @@ class ProductTest {
         assertThat(product.getMaker()).isEqualTo("코드숨");
         assertThat(product.getPrice()).isEqualTo(10000);
     }
+
+    @Test
+    void changeWith() {
+        Product product = Product.builder()
+                .id(1L)
+                .name("쥐돌이")
+                .maker("냥이월드")
+                .price(5000)
+                .build();
+        product.changeWith(Product.builder()
+                .name("쥐순이")
+                .maker("코드숨")
+                .price(10000)
+                .build());
+        assertThat(product.getName()).isEqualTo("쥐순이");
+        assertThat(product.getMaker()).isEqualTo("코드숨");
+        assertThat(product.getPrice()).isEqualTo(10000);
+    }
 }
