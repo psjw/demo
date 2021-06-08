@@ -24,4 +24,17 @@ public class User {
     private String name;
 
     private String password;
+
+    @Builder.Default
+    private boolean deleted = false;
+
+    public void changeWith(User source) {
+        name = source.getName();
+        password = source.getPassword();
+    }
+
+    //탈퇴했을때 시간같은거 넣어도됨
+    public void destroy() {
+        deleted = true;
+    }
 }

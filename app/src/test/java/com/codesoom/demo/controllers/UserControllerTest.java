@@ -2,7 +2,9 @@ package com.codesoom.demo.controllers;
 
 import com.codesoom.demo.application.UserService;
 import com.codesoom.demo.domain.User;
+import com.codesoom.demo.dto.UserModificationData;
 import com.codesoom.demo.dto.UserRegistrationData;
+import com.codesoom.demo.errors.UserNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,10 +13,14 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -39,6 +45,25 @@ class UserControllerTest {
                     .build();
             return user;
         });
+        given(userService.updateUser(eq(1L), any(UserModificationData.class)))
+                .will(invocation -> {
+                    Long id = invocation.getArgument(0);
+                    UserModificationData modificationData = invocation.getArgument(1);
+                    return User.builder()
+                            .id(id)
+                            .email("tester@example.com")
+                            .name(modificationData.getName())
+                            .build();
+                });
+
+        given(userService
+                .updateUser(eq(100L), any(UserModificationData.class)))
+                .willThrow(new UserNotFoundException(100L));
+
+
+        given(userService
+                .deleteUser(eq(100L)))
+                .willThrow(new UserNotFoundException(100L));
     }
 
 
@@ -67,6 +92,63 @@ class UserControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateUserWithValidAtrributes() throws Exception {
+
+        mockMvc.perform(patch("/users/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"TEST\",\"password\":\"test\"}"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(
+                        containsString("\"id\":1")
+                ))
+                .andExpect(content().string(
+                        containsString("\"name\":\"TEST\"")
+                ));
+
+        verify(userService).updateUser(eq(1L), any(UserModificationData.class));
+    }
+
+    @Test
+    void updateUserWithInvalidAtrributes() throws Exception {
+
+        mockMvc.perform(patch("/users/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"\",\"password\":\"\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    // 에러 #1 - ID없음
+
+    @Test
+    void updateUserWithNoExistedId() throws Exception {
+
+        mockMvc.perform(patch("/users/100")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"TEST\",\"password\":\"TEST\"}"))
+                .andExpect(status().isNotFound());
+        verify(userService)
+                .updateUser(eq(100L), any(UserModificationData.class));
+    }
+
+
+    @Test
+    void destroyWithExistedId() throws Exception {
+
+        mockMvc.perform(delete("/users/1"))
+                .andExpect(status().isOk());
+        verify(userService)
+                .deleteUser(eq(1L));
+    }
+
+    @Test
+    void destroyWithNotExistedId() throws Exception {
+        mockMvc.perform(delete("/users/100"))
+                .andExpect(status().isNotFound());
+        verify(userService)
+                .deleteUser(eq(100L));
     }
 
 }

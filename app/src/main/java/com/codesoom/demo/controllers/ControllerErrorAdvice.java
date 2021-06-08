@@ -3,6 +3,7 @@ package com.codesoom.demo.controllers;
 import com.codesoom.demo.dto.ErrorResponse;
 import com.codesoom.demo.errors.ProductNotFoundException;
 import com.codesoom.demo.errors.UserEmailDuplicationExeption;
+import com.codesoom.demo.errors.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -32,4 +33,12 @@ public class ControllerErrorAdvice {
     public ErrorResponse handleUserEamilAlreayExisted(){
         return new ErrorResponse("User's email address is already existed");
     }
+
+    @ResponseBody // 써 놓은 것 그대로 나감
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler(UserNotFoundException.class)
+    public ErrorResponse handleUserNotFound(){
+        return new ErrorResponse("User not found");
+    }
+
 }
