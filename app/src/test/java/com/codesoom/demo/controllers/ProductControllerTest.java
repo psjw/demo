@@ -1,9 +1,12 @@
 package com.codesoom.demo.controllers;
 
+import com.codesoom.demo.application.AuthenticationService;
 import com.codesoom.demo.application.ProductService;
 import com.codesoom.demo.domain.Product;
 import com.codesoom.demo.dto.ProductData;
+import com.codesoom.demo.errors.InvalidTokenException;
 import com.codesoom.demo.errors.ProductNotFoundException;
+import com.codesoom.demo.utils.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +14,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-
 
 import java.util.List;
 
@@ -38,6 +40,18 @@ class ProductControllerTest {
     @MockBean
     private ProductService productService;
 
+    @MockBean
+    private AuthenticationService authenticationService;
+
+    @MockBean
+    private JwtUtil jwtUtil;
+
+    private static final String VALID_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJ1c2" +
+            "VySWQiOjF9.ZZ3CUl0jxeLGvQ1Js5nG2Ty5qGTlqai5ubDMXZOdaDk";
+
+    private static final String INVALID_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJ1c2" +
+            "VySWQiOjF9.ZZ3CUl0jxeLGvQ1Js5nG2Ty5qGTlqai5ubDMXZOdaaa";
+
     @BeforeEach
     void setUp() {
         Product product = Product.builder()
@@ -61,10 +75,23 @@ class ProductControllerTest {
                     .price(source.getPrice())
                     .build();
         });
-        given(productService.updateProduct(eq(1000L),any(ProductData.class)))
+        given(productService.updateProduct(eq(1000L), any(ProductData.class)))
                 .willThrow(new ProductNotFoundException(1000L));
         given(productService.deleteProduct(eq(1000L)))
                 .willThrow(new ProductNotFoundException(1000L));
+
+        given(jwtUtil.decode(any())).will(
+                invocation -> {
+                    String token = invocation.getArgument(0);
+                    return new JwtUtil("12345678901234567890123456789012")
+                            .decode(token);
+                });
+
+        given(authenticationService.parseToken(VALID_TOKEN)).willReturn(1L);
+
+        given(authenticationService.parseToken(INVALID_TOKEN))
+                .willThrow(new InvalidTokenException(INVALID_TOKEN));
+
     }
 
     @Test
@@ -97,7 +124,8 @@ class ProductControllerTest {
         mockMvc.perform(post("/products")
                 .accept(MediaType.APPLICATION_JSON_UTF8)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\":\"쥐돌이\",\"maker\":\"냥이월드\",\"price\":5000}")) //WebMVC는 UTF-8을 기본으로 안잡음
+                .content("{\"name\":\"쥐돌이\",\"maker\":\"냥이월드\",\"price\":5000}")
+                .header("Authorization", "Bearer " + VALID_TOKEN)) //WebMVC는 UTF-8을 기본으로 안잡음
                 .andExpect(status().isCreated())
                 .andExpect(content().string(containsString("쥐돌이")));
         verify(productService).createProduct(any(ProductData.class));
@@ -108,8 +136,39 @@ class ProductControllerTest {
         mockMvc.perform(post("/products")
                 .accept(MediaType.APPLICATION_JSON_UTF8)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\":\"\",\"maker\":\"\",\"price\":0}")) //WebMVC는 UTF-8을 기본으로 안잡음
+                .content("{\"name\":\"\",\"maker\":\"\",\"price\":0}")
+                .header("Authorization", "Bearer " + VALID_TOKEN)) //WebMVC는 UTF-8을 기본으로 안잡음
                 .andExpect(status().isBadRequest());
+    }
+
+
+    @Test
+    void createWithAccessToken() throws Exception {
+        mockMvc.perform(post("/products")
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"쥐돌이\",\"maker\":\"냥이월드\",\"price\":5000}") //WebMVC는 UTF-8을 기본으로 안잡음
+                .header("Authorization", "Bearer " + VALID_TOKEN)) //WebMVC는 UTF-8을 기본으로 안잡음
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void createWithoutAccessToken() throws Exception {
+        mockMvc.perform(post("/products")
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"쥐돌이\",\"maker\":\"냥이월드\",\"price\":5000}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void createWithWrongAccessToken() throws Exception {
+        mockMvc.perform(post("/products")
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"쥐돌이\",\"maker\":\"냥이월드\",\"price\":5000}")
+                .header("Authorization", "Bearer " + INVALID_TOKEN))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -117,6 +176,7 @@ class ProductControllerTest {
         mockMvc.perform(patch("/products/1")
                 .accept(MediaType.APPLICATION_JSON_UTF8)
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + VALID_TOKEN)
                 .content("{\"name\":\"쥐순이\",\"maker\":\"냥이월드\",\"price\":5000}")) //WebMVC는 UTF-8을 기본으로 안잡음
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("쥐순이")));
@@ -124,10 +184,30 @@ class ProductControllerTest {
     }
 
     @Test
+    void updateWithoutAcccessToken() throws Exception {
+        mockMvc.perform(patch("/products/1")
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"쥐순이\",\"maker\":\"냥이월드\",\"price\":5000}")) //WebMVC는 UTF-8을 기본으로 안잡음
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void updateInvalidAcccessToken() throws Exception {
+        mockMvc.perform(patch("/products/1")
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + INVALID_TOKEN)
+                .content("{\"name\":\"쥐순이\",\"maker\":\"냥이월드\",\"price\":5000}")) //WebMVC는 UTF-8을 기본으로 안잡음
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void updateWithNotExistedProduct() throws Exception {
         mockMvc.perform(patch("/products/1000")
                 .accept(MediaType.APPLICATION_JSON_UTF8)
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + VALID_TOKEN)
                 .content("{\"name\":\"쥐순이\",\"maker\":\"냥이월드\",\"price\":5000}")) //WebMVC는 UTF-8을 기본으로 안잡음
                 .andExpect(status().isNotFound());
     }
@@ -137,6 +217,7 @@ class ProductControllerTest {
         mockMvc.perform(patch("/products/1")
                 .accept(MediaType.APPLICATION_JSON_UTF8)
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + VALID_TOKEN)
                 .content("{\"name\":\"\",\"maker\":\"\",\"price\":5000}")) //WebMVC는 UTF-8을 기본으로 안잡음
                 .andExpect(status().isBadRequest());
     }
@@ -144,14 +225,16 @@ class ProductControllerTest {
 
     @Test
     void destoryWithExistedProduct() throws Exception {
-        mockMvc.perform(delete("/products/1"))
+        mockMvc.perform(delete("/products/1")
+                .header("Authorization", "Bearer " + VALID_TOKEN))
                 .andExpect(status().isOk());
         verify(productService).deleteProduct(eq(1L));
     }
 
     @Test
     void destoryWithNotExistedProduct() throws Exception {
-        mockMvc.perform(delete("/products/1000"))
+        mockMvc.perform(delete("/products/1000")
+                .header("Authorization", "Bearer " + VALID_TOKEN))
                 .andExpect(status().isNotFound());
         verify(productService).deleteProduct(eq(1000L));
     }

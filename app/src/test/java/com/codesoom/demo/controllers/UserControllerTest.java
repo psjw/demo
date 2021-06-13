@@ -1,5 +1,6 @@
 package com.codesoom.demo.controllers;
 
+import com.codesoom.demo.application.AuthenticationService;
 import com.codesoom.demo.application.UserService;
 import com.codesoom.demo.domain.User;
 import com.codesoom.demo.dto.UserModificationData;
@@ -13,7 +14,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -33,6 +33,9 @@ class UserControllerTest {
 
     @MockBean
     private UserService userService;
+
+    @MockBean
+    private AuthenticationService authenticationService;
 
     @BeforeEach
     void setUp() {
