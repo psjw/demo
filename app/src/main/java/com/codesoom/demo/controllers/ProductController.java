@@ -14,6 +14,8 @@ import com.codesoom.demo.application.ProductService;
 import com.codesoom.demo.domain.Product;
 import com.codesoom.demo.dto.ProductData;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -56,24 +58,35 @@ public class ProductController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    // 이건 로그인 해야해 ! -> Authorization
+    // 누가 이걸 하는 거지? -> Authorization
+    @PreAuthorize("isAuthenticated() and hasAnyAuthority('USER')")
     public Product create(
-            @RequestHeader("Authorization") String authorization,
-            @RequestBody @Valid ProductData productData){
-        String accessToken = authorization.substring("Bearer ".length());
-        Long userId = authenticationService.parseToken(accessToken);
+            @RequestBody @Valid ProductData productData,
+            Authentication authentication
+    ){
+        System.out.println("=======================");
+        System.out.println(authentication);
+//        String accessToken = authorization.substring("Bearer ".length());
+//        Long userId = authenticationService.parseToken(accessToken);
         return productService.createProduct(productData);
     }
 
     @PatchMapping("{id}")
+    // 이건 로그인 해야해 ! -> Authorization
+    // 누가 이걸 하는 거지? -> Authorization
+    @PreAuthorize("isAuthenticated()")
     public Product update(
             @RequestHeader("Authorization") String authorization,
-            @PathVariable Long id, @RequestBody @Valid  ProductData productData){
+            @PathVariable Long id, @RequestBody @Valid  ProductData productData,Authentication authentication){
         String accessToken = authorization.substring("Bearer ".length());
         Long userId = authenticationService.parseToken(accessToken);
         return productService.updateProduct(id, productData);
     }
 
     @DeleteMapping("{id}")
+    // 이건 로그인 해야해 ! -> Authorization
+    // 누가 이걸 하는 거지? -> Authorization
     public void destroy(
             @RequestHeader("Authorization") String authorization,
             @PathVariable Long id){

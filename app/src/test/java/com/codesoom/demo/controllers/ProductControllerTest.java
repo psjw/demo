@@ -3,6 +3,7 @@ package com.codesoom.demo.controllers;
 import com.codesoom.demo.application.AuthenticationService;
 import com.codesoom.demo.application.ProductService;
 import com.codesoom.demo.domain.Product;
+import com.codesoom.demo.domain.Role;
 import com.codesoom.demo.dto.ProductData;
 import com.codesoom.demo.errors.InvalidTokenException;
 import com.codesoom.demo.errors.ProductNotFoundException;
@@ -15,6 +16,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
@@ -34,9 +36,6 @@ class ProductControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ProductController productController;
-
     @MockBean
     private ProductService productService;
 
@@ -49,8 +48,7 @@ class ProductControllerTest {
     private static final String VALID_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJ1c2" +
             "VySWQiOjF9.ZZ3CUl0jxeLGvQ1Js5nG2Ty5qGTlqai5ubDMXZOdaDk";
 
-    private static final String INVALID_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJ1c2" +
-            "VySWQiOjF9.ZZ3CUl0jxeLGvQ1Js5nG2Ty5qGTlqai5ubDMXZOdaaa";
+    private static final String INVALID_TOKEN = VALID_TOKEN + "WRONG";
 
     @BeforeEach
     void setUp() {
@@ -92,6 +90,7 @@ class ProductControllerTest {
         given(authenticationService.parseToken(INVALID_TOKEN))
                 .willThrow(new InvalidTokenException(INVALID_TOKEN));
 
+        given(authenticationService.roles(1L)).willReturn(Arrays.asList(new Role("USER")));
     }
 
     @Test
@@ -237,6 +236,13 @@ class ProductControllerTest {
                 .header("Authorization", "Bearer " + VALID_TOKEN))
                 .andExpect(status().isNotFound());
         verify(productService).deleteProduct(eq(1000L));
+    }
+
+
+    @Test
+    void destoryWithOutAccessToken() throws Exception {
+        mockMvc.perform(delete("/products/1000"))
+                .andExpect(status().isUnauthorized());
     }
 
 }
